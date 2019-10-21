@@ -28,6 +28,11 @@ nb_runs    = 10             # Number of runs (random ordering of classes at each
 np.random.seed(1993)        # Fix the random seed
 ########################################
 
+'''
+Cifar-100 dataset ref: https://www.cs.toronto.edu/~kriz/cifar.html
+This dataset is just like the CIFAR-10, except it has 100 classes containing 600 images each. There are 500 training images and 100 testing images per class. The 100 classes in the CIFAR-100 are grouped into 20 superclasses. Each image comes with a "fine" label (the class to which it belongs) and a "coarse" label (the superclass to which it belongs).
+'''
+
 # Load the dataset
 print("Loading data...")
 data = utils_cifar100.load_data(nb_val)
