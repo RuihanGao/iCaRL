@@ -13,6 +13,19 @@ from lasagne.layers import batch_norm
 from lasagne.layers import Layer
 from scipy.spatial.distance import cdist
 
+
+import torch
+import torch.nn as nn
+import torchvision
+import torchvision.transforms as transforms
+import pickle
+from torch.utils import data as data2
+import torch.nn.functional as F
+import torch.optim as optim
+import numpy as np
+from torch.autograd import Variable
+import os
+
 ###################### Load the data #######################
 
 def unpickle(file):
@@ -22,46 +35,75 @@ def unpickle(file):
     fo.close()
     return dict
 
-def load_data(samples_pr_cl_val):
-    xs = []
-    ys = []
-    for j in range(1):
-      d = unpickle('cifar-100-python/train')
-      # print("keys: ", [key for key in d]) # keys:  ['filenames', 'batch_label', 'fine_labels', 'coarse_labels', 'data']
-      x = d['data']
-      y = d['fine_labels']
-      xs.append(x)
-      ys.append(y)
+### Load slide dta  ###
+class Dataset(data2.Dataset):
+    def __init__(self, list_IDs, labels):
+        # initialize
+        self.labels = labels
+        self.list_IDs = list_IDs
+    def __len__(self):
+        'Denotes the total number of samples'
+        return len(self.list_IDs)
     
-    d = unpickle('cifar-100-python/test')
-    xs.append(d['data'])
-    ys.append(d['fine_labels'])
+    def __getitem__(self, index):
+        'Generates one sample of data'
+        # Select sample
+        ID = self.list_IDs[index]
+
+        # Load data and get label
+        X = torch.load('slide_6_10/' + ID + '.pt')
+        X.unsqueeze_(0)
+        y = self.labels[ID]
+
+        return X, y
     
-    x = np.concatenate(xs)/np.float32(255)
-    y = np.concatenate(ys)
-    x = np.dstack((x[:, :1024], x[:, 1024:2048], x[:, 2048:]))
-    x = x.reshape((x.shape[0], 32, 32, 3)).transpose(0,3,1,2)
-    # subtract per-pixel mean
-    pixel_mean = np.mean(x[0:50000],axis=0)
-    x -= pixel_mean
-    # Create Train/Validation set
-    eff_samples_cl = 500-samples_pr_cl_val
-    X_train = np.zeros((eff_samples_cl*100,3,32, 32))
-    Y_train = np.zeros(eff_samples_cl*100)
-    X_valid = np.zeros((samples_pr_cl_val*100,3,32, 32))
-    Y_valid = np.zeros(samples_pr_cl_val*100)
-    for i in range(100):
-        index_y=np.where(y[0:50000]==i)[0]
-        np.random.shuffle(index_y)
-        X_train[i*eff_samples_cl:(i+1)*eff_samples_cl] = x[index_y[0:eff_samples_cl],:,:,:]
-        Y_train[i*eff_samples_cl:(i+1)*eff_samples_cl] = y[index_y[0:eff_samples_cl]]
-        X_valid[i*samples_pr_cl_val:(i+1)*samples_pr_cl_val] = x[index_y[eff_samples_cl:500],:,:,:]
-        Y_valid[i*samples_pr_cl_val:(i+1)*samples_pr_cl_val] = y[index_y[eff_samples_cl:500]]
+    def get_X(self):
+        X = []
+        for i in range(len(self.list_IDs)):
+            ID = self.list_IDs[i]
+            # x = torch.load('slide_6_10/' + ID + '.pt').unsqueeze_(0)
+            x = torch.load('slide_6_10/' + ID + '.pt')
+            # convert to np array
+            X.append(x.numpy())
+        return np.array(X)
     
-    X_test  = x[50000:,:,:,:]
-    Y_test  = y[50000:]
+    def get_y(self):
+        y = []
+        for i in range(len(self.list_IDs)):
+            ID = self.list_IDs[i]
+            y.append(self.labels[ID])
+        return np.array(y)
+
+
+def load_slide_data(val_ratio):
+    # load data
+    [train_ids, train_labels, test_ids, test_labels] = pickle.load(open('slide_6_10.pkl', 'rb'))
+    print("loading slide data")
+    # print(len(train_ids), len(train_labels), len(test_ids)) # 1173 1173 253
+    training_dataset = Dataset(train_ids, train_labels)
+    X = training_dataset.get_X()
+    Y = training_dataset.get_y()
+    train_num = len(X)*(1-val_ratio)
+    X_train = X[:int(train_num), :, :, :]
+    Y_train = Y[:int(train_num)]
+    X_valid = X[int(train_num):, :, :, :]
+    Y_valid = Y[int(train_num):]
+
+    # print("example Dataset")
+    # print(training_dataset[0][0].size()) # tuple e.g. (torch.Size([1, 6, 10, 75]), 0)
+    # from iCaRL print(X_train.shape, Y_train.shape, X_test.shape) #(50000, 3, 32, 32) (50000,) (10000, 3, 32, 32)
+    test_dataset = Dataset(test_ids, test_labels)
+    X_test = test_dataset.get_X()
+    Y_test = test_dataset.get_y()
+    # print(X_train.shape) # (1173, 6, 10, 75)
+    # print(Y_train.shape) # (1173,)
+
+    # X_test  = x[50000:,:,:,:]
+    # Y_test  = y[50000:]
     # print("dataset size")
-    # print(X_train.shape, Y_train.shape, X_test.shape) #(50000, 3, 32, 32) (50000,) (10000, 3, 32, 32)
+    print(X_train.shape, Y_train.shape, X_test.shape) 
+    # cifar: (50000, 3, 32, 32) (50000,) (10000, 3, 32, 32)
+    # slide: (938, 6, 10, 75) (938,) (253, 6, 10, 75)
     return dict(
         X_train = lasagne.utils.floatX(X_train),
         Y_train = Y_train.astype('int32'),
@@ -69,6 +111,7 @@ def load_data(samples_pr_cl_val):
         Y_valid = Y_valid.astype('int32'),
         X_test  = lasagne.utils.floatX(X_test),
         Y_test  = Y_test.astype('int32'),)
+
 
 ###################### Build the neural network model #######################
 

@@ -1,2 +1,6 @@
 # Data
 cifar-100-python*
+slide_6_10/
+
+# temp files
+*.pyc
