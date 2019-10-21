@@ -14,7 +14,8 @@ from scipy.spatial.distance import cdist
 import utils_slide610
 
 ######### Modifiable Settings ##########
-nb_tot_cl  = 23
+nb_tot_cl  = 23            # number of total classes, 100 for cifar
+max_train_sample = 40      # Max number of training samples (including validation) per class, 500 for cifar
 batch_size = 32            # Batch size
 n          = 5              # Set the depth of the architecture: n = 5 -> 32 layers (See He et al. paper)
 nb_val     = 0              # Validation samples per class
@@ -28,6 +29,7 @@ wght_decay = 0.00001        # Weight Decay
 nb_runs    = 10             # Number of runs (random ordering of classes at each run)
 np.random.seed(1993)        # Fix the random seed
 ########################################
+
 
 # Load the dataset
 print("Loading data...")
@@ -43,7 +45,7 @@ else:
     Y_valid_total = data['Y_test']
 
 # Initialization
-dictionary_size     = 500-nb_val
+dictionary_size     = int(max_train_sample*(1-val_ratio))
 top1_acc_list_cumul = np.zeros((int(nb_tot_cl/nb_cl),3,int(nb_runs)))
 top1_acc_list_ori   = np.zeros((int(nb_tot_cl/nb_cl),3,int(nb_runs)))
 
@@ -174,7 +176,7 @@ for iteration_total in range(nb_runs):
             top5_acc    = 0
             top1_acc    = 0
             val_batches = 0
-            for batch in utils_slide610.iterate_minibatches(X_valid, Y_valid, min(500,len(X_valid)), shuffle=False):
+            for batch in utils_slide610.iterate_minibatches(X_valid, Y_valid, min(max_train_sample,len(X_valid)), shuffle=False):
                 inputs, targets_prep = batch
                 targets = np.zeros((inputs.shape[0],nb_tot_cl),np.float32)
                 targets[range(len(targets_prep)),targets_prep.astype('int32')] = 1.
@@ -219,7 +221,7 @@ for iteration_total in range(nb_runs):
         np.savez('intermed_incr'+str(iteration+1)+'_of_'+str(int(nb_tot_cl/nb_cl))+'.npz', *lasagne.layers.get_all_param_values(intermed))
         
         ### Exemplars 
-        nb_protos_cl = int(np.ceil(nb_protos*nb_tot_cl./nb_cl/(iteration+1)))
+        nb_protos_cl = int(np.ceil(nb_protos*nb_tot_cl/nb_cl/(iteration+1)))
         # Herding
         print('Updating exemplar set...')
         for iter_dico in range(nb_cl):
@@ -234,7 +236,7 @@ for iteration_total in range(nb_runs):
             w_t = mu
             iter_herding     = 0
             iter_herding_eff = 0
-            while not(np.sum(alpha_dr_herding[iteration,:,iter_dico]!=0)==min(nb_protos_cl,500)) and iter_herding_eff<1000:
+            while not(np.sum(alpha_dr_herding[iteration,:,iter_dico]!=0)==min(nb_protos_cl,max_train_sample)) and iter_herding_eff<1000:
                 tmp_t   = np.dot(w_t,D)
                 ind_max = np.argmax(tmp_t)
                 iter_herding_eff += 1

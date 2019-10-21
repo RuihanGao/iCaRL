@@ -26,6 +26,11 @@ import numpy as np
 from torch.autograd import Variable
 import os
 
+##################### MACROS #############################
+nb_tot_cl  = 23            # number of total classes, 100 for cifar
+max_train_sample = 40      # Max number of training samples (including validation) per class, 500 for cifar
+
+
 ###################### Load the data #######################
 
 def unpickle(file):
@@ -180,7 +185,7 @@ def build_cnn(input_var=None, n=5):
     l = GlobalPoolLayer(l)
     # fully connected layer
     network = DenseLayer(
-            l, num_units=100,
+            l, num_units=num_tot_cl,
             W=lasagne.init.HeNormal(),
             nonlinearity=lasagne.nonlinearities.sigmoid)
      
@@ -225,9 +230,9 @@ def accuracy_measure(X_valid, Y_valid, class_means, val_fn, top1_acc_list, itera
     stat_icarl = []
     stat_ncm   = []
     
-    for batch in iterate_minibatches(X_valid, Y_valid, min(500,len(X_valid)), shuffle=False):
+    for batch in iterate_minibatches(X_valid, Y_valid, min(max_train_sample,len(X_valid)), shuffle=False):
         inputs, targets_prep = batch
-        targets = np.zeros((inputs.shape[0],100),np.float32)
+        targets = np.zeros((inputs.shape[0],nb_tot_cl),np.float32)
         targets[range(len(targets_prep)),targets_prep.astype('int32')] = 1.
         err,pred,pred_inter = val_fn(inputs, targets)
         pred_inter  = (pred_inter.T/np.linalg.norm(pred_inter.T,axis=0)).T

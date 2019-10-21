@@ -12,7 +12,6 @@ import theano.tensor as T
 import lasagne
 from scipy.spatial.distance import cdist
 import utils_cifar100
-import utils_slide610
 
 ######### Modifiable Settings ##########
 batch_size = 128            # Batch size
