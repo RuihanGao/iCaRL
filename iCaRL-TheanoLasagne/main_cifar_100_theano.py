@@ -42,8 +42,8 @@ else:
 
 # Initialization
 dictionary_size     = 500-nb_val
-top1_acc_list_cumul = np.zeros((100/nb_cl,3,nb_runs))
-top1_acc_list_ori   = np.zeros((100/nb_cl,3,nb_runs))
+top1_acc_list_cumul = np.zeros((int(100/nb_cl),3,int(nb_runs)))
+top1_acc_list_ori   = np.zeros((int(100/nb_cl),3,int(nb_runs)))
 
 # Launch the different runs 
 for iteration_total in range(nb_runs):
@@ -94,7 +94,7 @@ for iteration_total in range(nb_runs):
     Y_valid_cumuls    = []
     Y_protoset_cumuls = []
     Y_train_cumuls    = []
-    alpha_dr_herding  = np.zeros((100/nb_cl,dictionary_size,nb_cl),np.float32)
+    alpha_dr_herding  = np.zeros((int(100/nb_cl),dictionary_size,nb_cl),np.float32)
     
     # The following contains all the training samples of the different classes 
     # because we want to compare our method with the theoretical case where all the training samples are stored
@@ -102,7 +102,7 @@ for iteration_total in range(nb_runs):
     for orde in range(100):
         prototypes[orde,:,:,:,:] = X_train_total[np.where(Y_train_total==order[orde])]
     
-    for iteration in range(100/nb_cl):
+    for iteration in range(int(100/nb_cl)):
         # Save data results at each increment
         np.save('top1_acc_list_cumul_icarl_cl'+str(nb_cl),top1_acc_list_cumul)
         np.save('top1_acc_list_ori_icarl_cl'+str(nb_cl),top1_acc_list_ori)
@@ -186,7 +186,7 @@ for iteration_total in range(nb_runs):
                 val_batches += 1
             # Then we print the results for this epoch:
             print("Batch of classes {} out of {} batches".format(
-                iteration + 1, 100/nb_cl))
+                iteration + 1, int(100/nb_cl)))
             print("Epoch {} of {} took {:.3f}s".format(
                 epoch + 1, epochs, time.time() - start_time))
             print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
@@ -213,8 +213,8 @@ for iteration_total in range(nb_runs):
         lasagne.layers.set_all_param_values(network2, params_values)
 
         # Save the network
-        np.savez('net_incr'+str(iteration+1)+'_of_'+str(100/nb_cl)+'.npz', *lasagne.layers.get_all_param_values(network))
-        np.savez('intermed_incr'+str(iteration+1)+'_of_'+str(100/nb_cl)+'.npz', *lasagne.layers.get_all_param_values(intermed))
+        np.savez('net_incr'+str(iteration+1)+'_of_'+str(int(100/nb_cl))+'.npz', *lasagne.layers.get_all_param_values(network))
+        np.savez('intermed_incr'+str(iteration+1)+'_of_'+str(int(100/nb_cl))+'.npz', *lasagne.layers.get_all_param_values(intermed))
         
         ### Exemplars 
         nb_protos_cl = int(np.ceil(nb_protos*100./nb_cl/(iteration+1)))

@@ -16,9 +16,9 @@ from scipy.spatial.distance import cdist
 ###################### Load the data #######################
 
 def unpickle(file):
-    import cPickle
+    import pickle
     fo = open(file, 'rb')
-    dict = cPickle.load(fo)
+    dict = pickle.load(fo, encoding='latin1')
     fo.close()
     return dict
 

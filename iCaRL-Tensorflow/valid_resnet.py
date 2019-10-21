@@ -8,9 +8,9 @@ from scipy.spatial.distance import cdist
 import scipy.io
 import sys
 try:
-    import cPickle
+    import pickle
 except:
-    import _pickle as cPickle
+    import _pickle as pickle
 # Syspath for the folder with the utils files
 #sys.path.insert(0, "/data/sylvestre")
 
@@ -38,18 +38,18 @@ save_path   = '/data/srebuffi/backup/'
 # Load ResNet settings
 str_mixing = str(nb_cl)+'mixing.pickle'
 with open(str_mixing,'rb') as fp:
-    mixing = cPickle.load(fp)
+    mixing = pickle.load(fp, encoding='latin1')
 
 str_settings_resnet = str(nb_cl)+'settings_resnet.pickle'
 with open(str_settings_resnet,'rb') as fp:
-    order       = cPickle.load(fp)
-    files_valid = cPickle.load(fp)
-    files_train = cPickle.load(fp)
+    order       = pickle.load(fp, encoding='latin1')
+    files_valid = pickle.load(fp, encoding='latin1')
+    files_train = pickle.load(fp, encoding='latin1')
 
 # Load class means
 str_class_means = str(nb_cl)+'class_means.pickle'
 with open(str_class_means,'rb') as fp:
-      class_means = cPickle.load(fp)
+      class_means = pickle.load(fp, encoding='latin1')
 
 # Loading the labels
 labels_dic, label_names, validation_ground_truth = utils_data.parse_devkit_meta(devkit_path)

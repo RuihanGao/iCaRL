@@ -4,9 +4,9 @@ import os
 import scipy.io
 import sys
 try:
-    import cPickle
+    import pickle
 except:
-    import _pickle as cPickle
+    import _pickle as pickle
 
 def parse_devkit_meta(devkit_path):
     meta_mat                = scipy.io.loadmat(devkit_path+'/meta.mat')

@@ -1,9 +1,9 @@
 import tensorflow as tf
 import numpy as np
 try:
-    import cPickle
+    import pickle
 except:
-    import _pickle as cPickle
+    import _pickle as pickle
 
 
 def relu(x, name, alpha):
@@ -175,4 +175,4 @@ def save_model(name, scope, sess):
     variables = tf.get_collection(tf.GraphKeys.WEIGHTS, scope=scope)
     d = [(v.name.split(':')[0], sess.run(v)) for v in variables]
     
-    cPickle.dump(d, open(name, 'wb'))
+    pickle.dump(d, open(name, 'wb'))

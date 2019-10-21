@@ -7,9 +7,9 @@ import os
 import scipy.io
 import sys
 try:
-    import cPickle
+    import pickle
 except:
-    import _pickle as cPickle
+    import _pickle as pickle
 # Syspath for the folder with the utils files
 #sys.path.insert(0, "/media/data/srebuffi")
 
@@ -70,12 +70,12 @@ files_train, files_valid = utils_data.prepare_files(train_path, mixing, order, l
 
 # Pickle order and files lists and mixing
 with open(str(nb_cl)+'mixing.pickle','wb') as fp:
-    cPickle.dump(mixing,fp)
+    pickle.dump(mixing,fp)
 
 with open(str(nb_cl)+'settings_resnet.pickle','wb') as fp:
-    cPickle.dump(order,fp)
-    cPickle.dump(files_valid,fp)
-    cPickle.dump(files_train,fp)
+    pickle.dump(order,fp)
+    pickle.dump(files_valid,fp)
+    pickle.dump(files_train,fp)
 
 
 ### Start of the main algorithm ###
@@ -261,8 +261,8 @@ for itera in range(nb_groups):
   
   # Pickle class means and protoset
   with open(str(nb_cl)+'class_means.pickle','wb') as fp:
-      cPickle.dump(class_means,fp)
+      pickle.dump(class_means,fp)
   with open(str(nb_cl)+'files_protoset.pickle','wb') as fp:
-      cPickle.dump(files_protoset,fp)
+      pickle.dump(files_protoset,fp)
 
 
